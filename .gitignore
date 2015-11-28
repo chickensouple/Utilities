@@ -1,1 +1,10 @@
-main
+*.out
+bin
+build
+*.swp
+*~*
+~*
+*~
+*.tmp
+*.TMP
+

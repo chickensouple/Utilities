@@ -16,6 +16,12 @@ int main() {
 		buff.pushBack(i + 10);
 	}
 
+
+
+	for (int i = 0; i < 8; i++) {
+		printf("idx %d: %d\n", i, buff.readFront(i));
+	}
+
 	// for (int i = 0; i < 10; i++) {
 	// 	int val = buff.readBack();
 

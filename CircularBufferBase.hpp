@@ -108,19 +108,16 @@ protected:
 
 	T* _arr;
 	size_t _num;
-	size_t _frontIdx;
-	size_t _backIdx;
-
-	static size_t incrementIdx(size_t idx);
-	static size_t decrementIdx(size_t idx);	
+	CircularBufferIterator<T, N> _front;
+	CircularBufferIterator<T, N> _back;
 };
 
 template <class T, size_t N>
 class CircularBufferIterator {
 public:
 	CircularBufferIterator();
-	CircularBufferIterator(const CircularBufferBase<T, N>* ptr);
-	CircularBufferIterator(const CircularBufferBase<T, N>* ptr, size_t idx);
+	CircularBufferIterator(CircularBufferBase<T, N>* ptr);
+	CircularBufferIterator(CircularBufferBase<T, N>* ptr, size_t idx);
 	CircularBufferIterator(const CircularBufferIterator& other);
 
 	const CircularBufferIterator& operator=(const CircularBufferIterator& other);
@@ -149,8 +146,8 @@ bool CircularBufferBase<T, N>::pushBack(const T& val) {
 		return false;
 	}
 
-	_backIdx = decrementIdx(_backIdx);
-	_arr[_backIdx] = val;
+	_back--;
+	*_back = val;
 	_num++;
 	return true;
 }
@@ -161,8 +158,8 @@ bool CircularBufferBase<T, N>::pushFront(const T& val) {
 		return false;
 	}
 
-	_arr[_frontIdx] = val;
-	_frontIdx = incrementIdx(_frontIdx);
+	*_front = val;
+	_front++;
 	_num++;
 	return true;
 }
@@ -173,7 +170,7 @@ bool CircularBufferBase<T, N>::popBack() {
 		return false;
 	}
 
-	_backIdx = incrementIdx(_backIdx);
+	_back++;
 	_num--;
 	return true;
 }
@@ -184,43 +181,33 @@ bool CircularBufferBase<T, N>::popFront() {
 		return false;
 	}
 
-	_frontIdx = decrementIdx(_frontIdx);
+	_front--;
 	_num--;
 	return true;
 }
 
 template <class T, size_t N>
 T& CircularBufferBase<T, N>::readBack() {
-	return _arr[_backIdx];
+	return *_back;
 }
 
 template <class T, size_t N>
 T& CircularBufferBase<T, N>::readFront() {
-	size_t frontValIdx = decrementIdx(_frontIdx);
-	return _arr[frontValIdx];
+	CircularBufferIterator<T, N> it = _front - 1;
+	return *it;
 }
 
 template <class T, size_t N>
 T& CircularBufferBase<T, N>::readBack(size_t idx) {
-	assert(idx < N);
-	idx = _backIdx + idx;
-	if (idx >= N) {
-		idx -= N;
-	}
-	return _arr[idx];
+	CircularBufferIterator<T, N> it = _back + idx;
+	return *it;
 }
 
 template <class T, size_t N>
 T& CircularBufferBase<T, N>::readFront(size_t idx) {
-	assert(idx < N);
-	if (_frontIdx < idx) {
-		// since we are using unsigned, don't subtract or it will underflow
-		idx = (_frontIdx + N) - idx;
-	} else {
-		idx = _frontIdx - idx;
-	}
-	idx = decrementIdx(idx);
-	return _arr[idx];
+	CircularBufferIterator<T, N> it = _front - idx;
+	it--;
+	return *it;
 }
 
 template <class T, size_t N>
@@ -280,12 +267,12 @@ bool CircularBufferBase<T, N>::full() const {
 
 template <class T, size_t N>
 CircularBufferIterator<T, N> CircularBufferBase<T, N>::begin() const {
-	return CircularBufferIterator<T, N>(this, _backIdx);
+	return _back;
 }
 
 template <class T, size_t N>
 CircularBufferIterator<T, N> CircularBufferBase<T, N>::end() const {
-	return CircularBufferIterator<T, N>(this, _frontIdx);
+	return _front;
 }
 
 template <class T, size_t N>
@@ -311,33 +298,15 @@ template <class T, size_t N>
 CircularBufferBase<T, N>::CircularBufferBase() :
 	_arr(nullptr),
 	_num(0),
-	_frontIdx(0),
-	_backIdx(0) { }
+	_front(this),
+	_back(this) { }
 
 template <class T, size_t N>
 CircularBufferBase<T, N>::CircularBufferBase(const CircularBufferBase<T, N>& other) :
 	_num(other.num),
-	_frontIdx(other._frontIdx),
-	_backIdx(other._backIdx) {
+	_front(other._front),
+	_back(other._back) {
 	std::memcpy(_arr, other._arr, N * sizeof(T));
-}
-
-template <class T, size_t N>
-size_t CircularBufferBase<T, N>::incrementIdx(size_t idx) {
-	if (idx == N - 1) {
-		return 0;
-	} else {
-		return idx + 1;
-	}
-}
-
-template <class T, size_t N>
-size_t CircularBufferBase<T, N>::decrementIdx(size_t idx) {
-	if (idx == 0) {
-		return N - 1;
-	} else {
-		return idx - 1;
-	}
 }
 
 template <class T, size_t N>
@@ -346,12 +315,12 @@ CircularBufferIterator<T, N>::CircularBufferIterator() :
 	_idx(0) { }
 
 template <class T, size_t N>
-CircularBufferIterator<T, N>::CircularBufferIterator(const CircularBufferBase<T, N>* ptr) :
+CircularBufferIterator<T, N>::CircularBufferIterator(CircularBufferBase<T, N>* ptr) :
 	_ptr(ptr),
 	_idx(0) { }
 
 template <class T, size_t N>
-CircularBufferIterator<T, N>::CircularBufferIterator(const CircularBufferBase<T, N>* ptr, size_t idx) :
+CircularBufferIterator<T, N>::CircularBufferIterator(CircularBufferBase<T, N>* ptr, size_t idx) :
 	_ptr(ptr),
 	_idx(idx) { }
 
@@ -374,12 +343,6 @@ CircularBufferIterator<T, N>& CircularBufferIterator<T, N>::operator++() {
 
 template <class T, size_t N>
 CircularBufferIterator<T, N> CircularBufferIterator<T, N>::operator++(int) {
-	(*this)--;
-	return *this;
-}
-
-template <class T, size_t N>
-CircularBufferIterator<T, N>& CircularBufferIterator<T, N>::operator--() {
 	CircularBufferIterator<T, N> tmp = *this;
 	if (_idx == N - 1) {
 		_idx = 0;
@@ -387,6 +350,12 @@ CircularBufferIterator<T, N>& CircularBufferIterator<T, N>::operator--() {
 		_idx = _idx + 1;
 	}
 	return tmp;
+}
+
+template <class T, size_t N>
+CircularBufferIterator<T, N>& CircularBufferIterator<T, N>::operator--() {
+	(*this)--;
+	return *this;
 }
 
 template <class T, size_t N>

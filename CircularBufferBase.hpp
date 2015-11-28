@@ -5,7 +5,8 @@
 #include <cstdint>
 #include <cstring>
 
-#define CIRCULAR_BUFFER_ITERATOR
+// define CIRCULAR_BUFFER_ITERATOR if iterators are being used
+// #define CIRCULAR_BUFFER_ITERATOR
 
 #ifdef CIRCULAR_BUFFER_ITERATOR
 template <class T, size_t N, bool C>
@@ -270,12 +271,16 @@ bool CircularBufferBase<T, N>::full() const {
 template <class T, size_t N>
 bool CircularBufferBase<T, N>::operator==(const CircularBufferBase<T, N>& other) const {
 	if (_num != other._num) return false;
-	CircularBufferIterator<T, N, true> it1 = this->begin();
-	CircularBufferIterator<T, N, true> it2 = other.begin();
-	while (it1 != this->end()) {
-		if ((*it1)++ != (*it2)++) {
+
+	size_t idx1 = _backIdx;
+	size_t idx2 = other._backIdx;
+	for (int i = 0; i < _num; i++) {
+		if (_arr[idx1] != other._arr[idx2]) {
 			return false;
 		}
+
+		idx1 = incrementIdx(idx1);
+		idx2 = incrementIdx(idx2);
 	}
 
 	return true;

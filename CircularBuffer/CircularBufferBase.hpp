@@ -20,6 +20,7 @@ friend CircularBufferIterator<T, N, true>;
 friend CircularBufferIterator<T, N, false>;
 #endif /* CIRCULAR_BUFFER_ITERATOR */
 public:
+	void copy(const CircularBufferBase<T, N>& other);
 	/**
 	 * @brief Add a value to back of buffer
 	 * @details value will be copied
@@ -117,7 +118,8 @@ protected:
 	 */
 	CircularBufferBase();
 
-	CircularBufferBase(const CircularBufferBase<T, N>& other);
+	CircularBufferBase(const CircularBufferBase<T, N>& other) = delete;
+	CircularBufferBase<T, N>& operator=(const CircularBufferBase<T, N>& other) = delete;
 
 	T* _arr;
 	size_t _num;
@@ -127,6 +129,28 @@ protected:
 	inline static size_t incrementIdx(size_t idx);
 	inline static size_t decrementIdx(size_t idx);
 };
+
+template <class T, size_t N>
+void CircularBufferBase<T, N>::copy(const CircularBufferBase<T, N>& other) {
+	_num = other._num;
+	_frontIdx = other._frontIdx;
+	_backIdx = other._backIdx;
+
+	size_t spaceUntilEnd = N - _backIdx;
+	if (spaceUntilEnd < _num) {
+		for (size_t idx = _backIdx; idx < N; idx++) {
+			_arr[idx] = other._arr[idx];
+		}
+		size_t spaceLeft = _num - spaceUntilEnd;
+		for (size_t idx = 0; idx < spaceLeft; idx++) {
+			_arr[idx] = other._arr[idx];
+		}
+	} else {
+		for (size_t idx = _backIdx; idx < _backIdx + _num; idx++) {
+			_arr[idx] = other._arr[idx];
+		}
+	}
+}
 
 template <class T, size_t N>
 bool CircularBufferBase<T, N>::pushBack(const T& val) {
@@ -319,14 +343,6 @@ CircularBufferBase<T, N>::CircularBufferBase() :
 	_num(0),
 	_frontIdx(0),
 	_backIdx(0) { }
-
-template <class T, size_t N>
-CircularBufferBase<T, N>::CircularBufferBase(const CircularBufferBase<T, N>& other) :
-	_num(other.num),
-	_frontIdx(other._frontIdx),
-	_backIdx(other._backIdx) {
-	std::memcpy(_arr, other._arr, N * sizeof(T));
-}
 
 template <class T, size_t N>
 inline size_t CircularBufferBase<T, N>::incrementIdx(size_t idx) {

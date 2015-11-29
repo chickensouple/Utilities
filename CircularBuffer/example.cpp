@@ -19,16 +19,4 @@ int main() {
 	for (int i = 0; i < 8; i++) {
 		printf("idx %d: %d\n", i, buff.readBack(i));
 	}
-
-	// for (auto i = buff.cbegin(); i != buff.cend(); i++) {
-	// 	printf("Iterator: %d\n", *i);
-	// }
-
-	// for (int i = 0; i < 10; i++) {
-	// 	int val = buff.readBack();
-
-	// 	bool valid = buff.popBack();
-	// 	printf("Valid: %d\tval: %d\tnum: %d\tfull: %d\tempty: %d\n", valid, val, buff.num(), buff.full(), buff.empty());
-	// }
-
 }

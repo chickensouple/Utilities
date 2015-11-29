@@ -15,10 +15,12 @@ class CircularBufferIterator;
 
 template <class T, size_t N>
 class CircularBufferBase {
+
 #ifdef CIRCULAR_BUFFER_ITERATOR
 friend CircularBufferIterator<T, N, true>;
 friend CircularBufferIterator<T, N, false>;
 #endif /* CIRCULAR_BUFFER_ITERATOR */
+
 public:
 	void copy(const CircularBufferBase<T, N>& other);
 	/**
@@ -120,6 +122,8 @@ protected:
 
 	CircularBufferBase(const CircularBufferBase<T, N>& other) = delete;
 	CircularBufferBase<T, N>& operator=(const CircularBufferBase<T, N>& other) = delete;
+	CircularBufferBase(CircularBufferBase<T, N>&& other) = delete;
+	CircularBufferBase<T, N>& operator=(CircularBufferBase<T, N>&& other) = delete;
 
 	T* _arr;
 	size_t _num;
@@ -596,8 +600,6 @@ int CircularBufferIterator<T, N, C>::operator-(const CircularBufferIterator<T, N
 	return diff1 - diff2;
 }
 
-
 #endif /* CIRCULAR_BUFFER_ITERATOR */
-
 
 #endif /* _CIRCULAR_BUFFER_BASE_HPP */

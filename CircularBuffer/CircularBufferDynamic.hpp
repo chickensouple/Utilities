@@ -19,9 +19,13 @@ public:
 
 	CircularBufferDynamic(const CircularBufferDynamic<T, N>& other);
 
+	CircularBufferDynamic(CircularBufferDynamic<T, N>&& other);
+
 	CircularBufferDynamic<T, N>& operator=(CircularBufferBase<T, N>& other);
 
 	CircularBufferDynamic<T, N>& operator=(CircularBufferDynamic<T, N>& other);
+
+	CircularBufferDynamic<T, N>& operator=(CircularBufferDynamic<T, N>&& other);
 };
 
 template <class T, size_t N>
@@ -46,6 +50,15 @@ CircularBufferDynamic<T, N>::CircularBufferDynamic(const CircularBufferDynamic<T
 	this->_arr = new T[N];
 	this->copy(other);
 }
+
+template <class T, size_t N>
+CircularBufferDynamic<T, N>::CircularBufferDynamic(CircularBufferDynamic<T, N>&& other) {
+	this->_num = other._num;
+	this->_frontIdx = other._frontIdx;
+	this->_backIdx = other._backIdx;
+	this->_arr = other._arr;
+}
+
 template <class T, size_t N>
 CircularBufferDynamic<T, N>& CircularBufferDynamic<T, N>::operator=(CircularBufferBase<T, N>& other) {
 	this->copy(other);
@@ -56,6 +69,14 @@ template <class T, size_t N>
 CircularBufferDynamic<T, N>& CircularBufferDynamic<T, N>::operator=(CircularBufferDynamic<T, N>& other) {
 	this->copy(other);
 	return *this;
+}
+
+template <class T, size_t N>
+CircularBufferDynamic<T, N>& CircularBufferDynamic<T, N>::operator=(CircularBufferDynamic<T, N>&& other) {
+	this->_num = other._num;
+	this->_frontIdx = other._frontIdx;
+	this->_backIdx = other._backIdx;
+	this->_arr = other._arr;
 }
 
 #endif /* _CIRCULAR_BUFFER_DYNAMIC_HPP */

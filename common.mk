@@ -6,7 +6,7 @@ CXX := clang++
 CC := gcc
 
 # compiler flags
-CXX_COMMON_FLAGS:= -std=c++11 -Wall -Wno-unused-parameter -g 
+CXX_COMMON_FLAGS:= -O3 -std=c++11 -Wall -Wno-unused-parameter
 CC_COMMON_FLAGS := -O3 -Wall -Wno-unused-parameter
 
 # include flags

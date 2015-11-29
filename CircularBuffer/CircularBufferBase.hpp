@@ -318,22 +318,22 @@ bool CircularBufferBase<T, N>::operator!=(const CircularBufferBase<T, N>& other)
 #ifdef CIRCULAR_BUFFER_ITERATOR
 template <class T, size_t N>
 CircularBufferIterator<T, N, false> CircularBufferBase<T, N>::begin() {
-	return CircularBufferIterator<T, N, false>(this, _backIdx, true);
+	return CircularBufferIterator<T, N, false>(this, _backIdx, CircularBufferIterator<T, N, false>::BACK);
 }
 
 template <class T, size_t N>
 CircularBufferIterator<T, N, false> CircularBufferBase<T, N>::end() {
-	return CircularBufferIterator<T, N, false>(this, _frontIdx, false);
+	return CircularBufferIterator<T, N, false>(this, _frontIdx, CircularBufferIterator<T, N, false>::FRONT);
 }
 
 template <class T, size_t N>
 CircularBufferIterator<T, N, true> CircularBufferBase<T, N>::cbegin() {
-	return CircularBufferIterator<T, N, true>(this, _backIdx, true);
+	return CircularBufferIterator<T, N, true>(this, _backIdx, CircularBufferIterator<T, N, true>::BACK);
 }
 
 template <class T, size_t N>
 CircularBufferIterator<T, N, true> CircularBufferBase<T, N>::cend() {
-	return CircularBufferIterator<T, N, true>(this, _frontIdx, false);
+	return CircularBufferIterator<T, N, true>(this, _frontIdx, CircularBufferIterator<T, N, true>::FRONT);
 }
 #endif /* CIRCULAR_BUFFER_ITERATOR */
 
@@ -368,11 +368,11 @@ template <class T, size_t N, bool C>
 class CircularBufferIterator {
 private:
 	typedef typename std::conditional<C, const T&, T&>::type ReferenceType;
-
 public:
+	enum IteratorState { BACK, FRONT, MIDDLE };
 	CircularBufferIterator();
 	CircularBufferIterator(CircularBufferBase<T, N>* ptr);
-	CircularBufferIterator(CircularBufferBase<T, N>* ptr, size_t idx, bool isBack);
+	CircularBufferIterator(CircularBufferBase<T, N>* ptr, size_t idx, IteratorState state);
 	CircularBufferIterator(const CircularBufferIterator<T, N, C>& other);
 
 	bool valid() const;
@@ -392,36 +392,37 @@ public:
 	ReferenceType operator[](size_t idx);
 	CircularBufferIterator<T, N, C> operator+(int n);
 	CircularBufferIterator<T, N, C> operator-(int n);
-	CircularBufferIterator<T, N, C> operator-(const CircularBufferIterator<T, N, C>& other);
+	int operator-(const CircularBufferIterator<T, N, C>& other) const;
+
 protected:
 	CircularBufferBase<T, N>* _ptr;
 	size_t _idx;
-	bool _isBack;
+	IteratorState _state;
 };
 
 template <class T, size_t N, bool C>
 CircularBufferIterator<T, N, C>::CircularBufferIterator() :
 	_ptr(nullptr),
 	_idx(0),
-	_isBack(false) { }
+	_state(BACK) { }
 
 template <class T, size_t N, bool C>
 CircularBufferIterator<T, N, C>::CircularBufferIterator(CircularBufferBase<T, N>* ptr) :
 	_ptr(ptr),
 	_idx(0),
-	_isBack(false) { }
+	_state(BACK) { }
 
 template <class T, size_t N, bool C>
-CircularBufferIterator<T, N, C>::CircularBufferIterator(CircularBufferBase<T, N>* ptr, size_t idx, bool isBack) :
+CircularBufferIterator<T, N, C>::CircularBufferIterator(CircularBufferBase<T, N>* ptr, size_t idx, IteratorState state) :
 	_ptr(ptr),
 	_idx(idx),
-	_isBack(isBack) { }
+	_state(state) { }
 
 template <class T, size_t N, bool C>
 CircularBufferIterator<T, N, C>::CircularBufferIterator(const CircularBufferIterator<T, N, C>& other) :
 	_ptr(other._ptr),
 	_idx(other._idx),
-	_isBack(other._isBack) { }
+	_state(other._state) { }
 
 template <class T, size_t N, bool C>
 bool CircularBufferIterator<T, N, C>::valid() const {
@@ -444,7 +445,7 @@ template <class T, size_t N, bool C>
 CircularBufferIterator<T, N, C> CircularBufferIterator<T, N, C>::operator++(int) {
 	CircularBufferIterator<T, N, C> tmp = *this;
 
-	if (_idx != _ptr->_frontIdx || _isBack) {
+	if (_idx != _ptr->_frontIdx || _state == BACK) {
 		if (_idx == N - 1) {
 			_idx = 0;
 		} else {
@@ -452,7 +453,9 @@ CircularBufferIterator<T, N, C> CircularBufferIterator<T, N, C>::operator++(int)
 		}
 
 		if (_idx == _ptr->_frontIdx) {
-			_isBack = false; 
+			_state = FRONT; 
+		} else {
+			_state = MIDDLE;
 		}
 	}
 
@@ -469,7 +472,7 @@ template <class T, size_t N, bool C>
 CircularBufferIterator<T, N, C> CircularBufferIterator<T, N, C>::operator--(int) {
 	CircularBufferIterator<T, N, C> tmp = *this;
 
-	if (_idx != _ptr->_backIdx || !_isBack) {
+	if (_idx != _ptr->_backIdx || _state == FRONT) {
 		if (_idx == 0) {
 			_idx = N - 1;
 		} else {
@@ -477,7 +480,9 @@ CircularBufferIterator<T, N, C> CircularBufferIterator<T, N, C>::operator--(int)
 		}
 
 		if (_idx == _ptr->_backIdx) {
-			_isBack = true;
+			_state = BACK;
+		} else {
+			_state = MIDDLE;
 		}
 	}
 
@@ -486,7 +491,7 @@ CircularBufferIterator<T, N, C> CircularBufferIterator<T, N, C>::operator--(int)
 
 template <class T, size_t N, bool C>
 bool CircularBufferIterator<T, N, C>::operator==(const CircularBufferIterator& other) const {
-	return (_ptr == other._ptr) && (_idx == other._idx) && (_isBack == other._isBack);
+	return (_ptr == other._ptr) && (_idx == other._idx) && (_state == other._state);
 }
 
 template <class T, size_t N, bool C>
@@ -563,22 +568,30 @@ CircularBufferIterator<T, N, C> CircularBufferIterator<T, N, C>::operator-(int n
 }
 
 template <class T, size_t N, bool C>
-CircularBufferIterator<T, N, C> CircularBufferIterator<T, N, C>::operator-(const CircularBufferIterator<T, N, C>& other) {
+int CircularBufferIterator<T, N, C>::operator-(const CircularBufferIterator<T, N, C>& other) const {
 	assert(_ptr == other._ptr);
 
 	int diff1;
 	size_t backIdx = _ptr->_backIdx;
-	if (_idx < backIdx) {
-		diff1 = _idx + (N - 1 - backIdx);
+	if (_state == FRONT) {
+		diff1 = N;
 	} else {
-		diff1 = _idx - backIdx;
+		if (_idx < backIdx) {
+			diff1 = _idx + (N - backIdx);
+		} else {
+			diff1 = _idx - backIdx;
+		}
 	}
 
 	int diff2;
-	if (other._idx < backIdx) {
-		diff2 = other._idx + (N - 1 - backIdx);
+	if (other._state == FRONT) {
+		diff2 = N;
 	} else {
-		diff2 = other._idx - backIdx;
+		if (other._idx < backIdx) {
+			diff2 = other._idx + (N - backIdx);
+		} else {
+			diff2 = other._idx - backIdx;
+		}
 	}
 
 	return diff1 - diff2;

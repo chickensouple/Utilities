@@ -158,3 +158,69 @@ BOOST_AUTO_TEST_CASE(ctors_and_copy) {
 	}
 }
 
+BOOST_AUTO_TEST_CASE(iterator) {
+	const int buffSize = 10;
+	CircularBufferStatic<int, buffSize> staticBuff;
+	CircularBufferDynamic<int, buffSize> dynamicBuff;
+	CircularBufferBase<int, buffSize>* buffArr[2] =
+		{&staticBuff, &dynamicBuff};
+
+
+	for (int i = 0; i < 2; i++) {
+		CircularBufferBase<int, buffSize>& buff = *buffArr[i];
+		for (int j = 0; j < buffSize; j++) {
+			buff.pushFront(j - 8);
+		}
+		for (int j = 0; j < 8; j++) {
+			buff.popBack();
+		}
+		for (int j = 2; j < buffSize; j++) {
+			buff.pushFront(j);
+		}
+
+		int count = 0;
+		for (auto it = buff.begin(); it != buff.end(); it++) {
+			BOOST_CHECK(*it == count++);
+		}
+		BOOST_CHECK(buff.num() == buffSize);
+
+		int diff = buff.end() - buff.begin();
+		BOOST_CHECK(diff == buff.num());
+		diff = buff.begin() - buff.end();
+		BOOST_CHECK(diff == -buff.num());
+
+		auto beginIt = buff.begin();
+		count = buffSize;
+		for (auto it = buff.end(); it != beginIt; it--) {
+			int diff = it - beginIt;
+			bool greaterThan = it > beginIt;
+			bool lessThan = it < beginIt;
+			bool greaterThanEqual = it >= beginIt;
+			bool lessThanEqual = it <= beginIt;
+			BOOST_CHECK(diff == count--);
+			BOOST_CHECK(greaterThan == true);
+			BOOST_CHECK(lessThan == false);
+			BOOST_CHECK(greaterThanEqual == true);
+			BOOST_CHECK(lessThanEqual == (it == buff.begin()));
+		}
+		diff = buff.begin() - buff.begin();
+		BOOST_CHECK(diff == 0);
+
+
+		auto middleIt = buff.begin() + (buffSize / 2);
+		count = -(buffSize / 2);
+		for (auto it = buff.begin(); it != buff.end(); it++) {
+			int diff = it - middleIt;
+			bool greaterThan = it > middleIt;
+			bool lessThan = it < middleIt;
+			bool greaterThanEqual = it >= middleIt;
+			bool lessThanEqual = it <= middleIt;
+			BOOST_CHECK(greaterThan == (count > 0));
+			BOOST_CHECK(lessThan == (count < 0));
+			BOOST_CHECK(greaterThanEqual == (count >= 0));
+			BOOST_CHECK(lessThanEqual == (count <= 0));
+			BOOST_CHECK(diff == count++);
+		}
+	}
+}
+

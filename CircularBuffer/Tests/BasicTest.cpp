@@ -17,8 +17,12 @@ BOOST_AUTO_TEST_CASE(push_pop_read) {
 		CircularBufferBase<int, buffSize>& buff = *buffArr[buffIdx];
 
 		for (int i = 0; i < buffSize + 3; i++) {
+			bool full = buff.full();
+			bool empty = buff.empty();
 			bool valid = buff.pushBack(i);
 			BOOST_CHECK(valid == (i < buffSize));
+			BOOST_CHECK(full == (i >= buffSize));
+			BOOST_CHECK(empty == (i == 0));
 		}
 		BOOST_CHECK(buff.num() == buffSize);
 

@@ -225,6 +225,16 @@ BOOST_AUTO_TEST_CASE(iterator) {
 			BOOST_CHECK(lessThanEqual == (count <= 0));
 			BOOST_CHECK(diff == count++);
 		}
+
+		for (int i = 0; i < buffSize; i++) {
+			BOOST_CHECK(*(beginIt + i) == i);
+			BOOST_CHECK(beginIt[i] == i);
+		}
+		for (int i = 1; i <= buffSize; i++) {
+			auto endIt = buff.end();
+			auto diffIt = endIt - i;
+			BOOST_CHECK(*diffIt == (buffSize - i));
+		}
 	}
 }
 

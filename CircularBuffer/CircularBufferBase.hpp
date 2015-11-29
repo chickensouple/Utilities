@@ -554,10 +554,9 @@ CircularBufferIterator<T, N, C> CircularBufferIterator<T, N, C>::operator-(int n
 		return *this + (-n);
 	}
 
-	if (n >= _ptr->_num) {
-		n = _ptr->_num - 1;
+	if (n > _ptr->_num) {
+		n = _ptr->_num;
 	}
-
 	CircularBufferIterator<T, N, C> ret(*this);
 	if (ret._idx < n) {
 		// since we are using unsigned, don't subtract or it will underflow

@@ -3,7 +3,7 @@
 #include "CircularBufferDynamic.hpp"
 
 int main() {
-	CircularBufferDynamic<int, 8> buff;
+	CircularBufferDynamic<int> buff(8);
 	for (int i = 0; i < 10; i++) {
 		bool valid = buff.pushFront(i);
 		printf("Valid: %d\tnum: %zu\tfull: %d\tempty: %d\n", valid, buff.num(), buff.full(), buff.empty());

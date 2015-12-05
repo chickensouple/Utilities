@@ -1,4 +1,4 @@
-SOURCES := example.cpp
+CXX_SOURCES := example.cpp
 
 TEST_SOURCES := Tests/BasicTest.cpp
 
@@ -11,7 +11,7 @@ LDFLAGS := $(LD_COMMON_FLAGS)
 
 MAIN := $(OUTPUT_DIR)/CircularBufferExample.out
 
-all: $(MAIN) Tests
+all: $(MAIN)
 	@echo "    Built $<"
 
 $(MAIN): $(CXX_OBJECTS)
@@ -19,3 +19,6 @@ $(MAIN): $(CXX_OBJECTS)
 
 Tests: $(CXX_TEST_OBJECTS)
 	@$(CXX) $(OBJECT_PATH)/Tests/BasicTest.cpp.o $(INCLUDES) $(CXXFLAGS) -o $(OUTPUT_DIR)/BasicTest.out
+
+
+

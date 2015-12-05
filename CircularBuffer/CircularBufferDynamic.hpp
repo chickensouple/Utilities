@@ -8,71 +8,71 @@
  * @tparam T Type the buffer holds
  * @tparam N Number of items in buffer
  */
-template <class T, size_t N>
-class CircularBufferDynamic : public CircularBufferBase<T, N> {
+template <class T>
+class CircularBufferDynamic : public CircularBufferBase<T> {
 public:
-	CircularBufferDynamic();
+	CircularBufferDynamic(size_t capacity);
 
 	~CircularBufferDynamic();
 
-	CircularBufferDynamic(const CircularBufferBase<T, N>& other);
+	CircularBufferDynamic(const CircularBufferBase<T>& other);
 
-	CircularBufferDynamic(const CircularBufferDynamic<T, N>& other);
+	CircularBufferDynamic(const CircularBufferDynamic<T>& other);
 
-	CircularBufferDynamic(CircularBufferDynamic<T, N>&& other);
+	CircularBufferDynamic(CircularBufferDynamic<T>&& other);
 
-	CircularBufferDynamic<T, N>& operator=(CircularBufferBase<T, N>& other);
+	CircularBufferDynamic<T>& operator=(CircularBufferBase<T>& other);
 
-	CircularBufferDynamic<T, N>& operator=(CircularBufferDynamic<T, N>& other);
+	CircularBufferDynamic<T>& operator=(CircularBufferDynamic<T>& other);
 
-	CircularBufferDynamic<T, N>& operator=(CircularBufferDynamic<T, N>&& other);
+	CircularBufferDynamic<T>& operator=(CircularBufferDynamic<T>&& other);
 };
 
-template <class T, size_t N>
-CircularBufferDynamic<T, N>::CircularBufferDynamic() :
-	CircularBufferBase<T, N>() {
-	this->_arr = new T[N];
+template <class T>
+CircularBufferDynamic<T>::CircularBufferDynamic(size_t capacity) :
+	CircularBufferBase<T>(capacity) {
+	this->_arr = new T[capacity];
 }
 
-template <class T, size_t N>
-CircularBufferDynamic<T, N>::~CircularBufferDynamic() {
+template <class T>
+CircularBufferDynamic<T>::~CircularBufferDynamic() {
 	delete[] this->_arr;
 }
 
-template <class T, size_t N>
-CircularBufferDynamic<T, N>::CircularBufferDynamic(const CircularBufferBase<T, N>& other) { 
-	this->_arr = new T[N];
+template <class T>
+CircularBufferDynamic<T>::CircularBufferDynamic(const CircularBufferBase<T>& other) { 
+	this->_arr = new T[other._capacity];
 	this->copy(other);
 }
 
-template <class T, size_t N>
-CircularBufferDynamic<T, N>::CircularBufferDynamic(const CircularBufferDynamic<T, N>& other) { 
-	this->_arr = new T[N];
+template <class T>
+CircularBufferDynamic<T>::CircularBufferDynamic(const CircularBufferDynamic<T>& other) { 
+	this->_arr = new T[other._capacity];
 	this->copy(other);
 }
 
-template <class T, size_t N>
-CircularBufferDynamic<T, N>::CircularBufferDynamic(CircularBufferDynamic<T, N>&& other) {
+template <class T>
+CircularBufferDynamic<T>::CircularBufferDynamic(CircularBufferDynamic<T>&& other) {
 	this->_num = other._num;
 	this->_frontIdx = other._frontIdx;
 	this->_backIdx = other._backIdx;
 	this->_arr = other._arr;
 }
 
-template <class T, size_t N>
-CircularBufferDynamic<T, N>& CircularBufferDynamic<T, N>::operator=(CircularBufferBase<T, N>& other) {
+template <class T>
+CircularBufferDynamic<T>& CircularBufferDynamic<T>::operator=(CircularBufferBase<T>& other) {
 	this->copy(other);
 	return *this;
 }
 
-template <class T, size_t N>
-CircularBufferDynamic<T, N>& CircularBufferDynamic<T, N>::operator=(CircularBufferDynamic<T, N>& other) {
+template <class T>
+CircularBufferDynamic<T>& CircularBufferDynamic<T>::operator=(CircularBufferDynamic<T>& other) {
 	this->copy(other);
 	return *this;
 }
 
-template <class T, size_t N>
-CircularBufferDynamic<T, N>& CircularBufferDynamic<T, N>::operator=(CircularBufferDynamic<T, N>&& other) {
+template <class T>
+CircularBufferDynamic<T>& CircularBufferDynamic<T>::operator=(CircularBufferDynamic<T>&& other) {
 	this->_num = other._num;
 	this->_frontIdx = other._frontIdx;
 	this->_backIdx = other._backIdx;

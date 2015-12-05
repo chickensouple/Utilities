@@ -5,11 +5,11 @@ export ROOT_DIR
 
 PROJECTS := CircularBuffer
 
-include common.mk
-
 all: directories
 	@for dir in $(PROJECTS); do \
 	echo $$(basename $$dir) ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
+
+include common.mk
 
 clean:
 	rm -f -r $(BUILD_DIR)

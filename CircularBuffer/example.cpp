@@ -1,9 +1,9 @@
 #include <iostream>
 #include <cstdio>
-#include "CircularBufferDynamic.hpp"
+#include "CircularBuffer.hpp"
 
 int main() {
-	CircularBufferDynamic<int> buff(8);
+	CircularBuffer<int> buff(8);
 	for (int i = 0; i < 10; i++) {
 		bool valid = buff.pushFront(i);
 		printf("Valid: %d\tnum: %zu\tfull: %d\tempty: %d\n", valid, buff.num(), buff.full(), buff.empty());

@@ -11,7 +11,7 @@ LDFLAGS := $(LD_COMMON_FLAGS)
 
 MAIN := $(OUTPUT_DIR)/CircularBufferExample.out
 
-all: $(MAIN)
+all: $(MAIN) Tests
 	@echo "    Built $<"
 
 $(MAIN): $(CXX_OBJECTS)

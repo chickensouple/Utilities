@@ -1,5 +1,5 @@
-#ifndef _CIRCULAR_BUFFER_BASE_HPP
-#define _CIRCULAR_BUFFER_BASE_HPP
+#ifndef _CIRCULAR_BUFFER_HPP
+#define _CIRCULAR_BUFFER_HPP
 
 #include <cassert>
 #include <cstdint>
@@ -14,7 +14,7 @@ class CircularBufferIterator;
 #endif /* CIRCULAR_BUFFER_ITERATOR */
 
 template <class T>
-class CircularBufferBase {
+class CircularBuffer {
 
 #ifdef CIRCULAR_BUFFER_ITERATOR
 friend CircularBufferIterator<T, true>;
@@ -22,7 +22,27 @@ friend CircularBufferIterator<T, false>;
 #endif /* CIRCULAR_BUFFER_ITERATOR */
 
 public:
-	void copy(const CircularBufferBase<T>& other);
+	CircularBuffer(size_t capacity);
+
+	CircularBuffer(const CircularBuffer<T>& other);
+
+	CircularBuffer(CircularBuffer<T>&& other);
+
+	CircularBuffer<T>& operator=(const CircularBuffer<T>& other);
+
+	CircularBuffer<T>& operator=(CircularBuffer<T>&& other);
+
+	~CircularBuffer();
+
+	/**
+	 * @brief Copies data from other to this one
+	 * @details doesn't change the capacity of current buffer
+	 * if other has more data than the capacity of current buffer
+	 * it will only copy capacity() number of elements.
+	 * @param other buffer to copy from
+	 */
+	void copy(const CircularBuffer<T>& other);
+
 	/**
 	 * @brief Add a value to back of buffer
 	 * @details value will be copied
@@ -91,6 +111,14 @@ public:
 	T readBackCopy(size_t idx) const;
 	T readFrontCopy(size_t idx) const;
 
+
+	void clear();
+
+	/**
+	 * @brief Returns capacity of buffer 
+	 * @details the maximum number of elements this buffer can hold
+	 */
+	size_t capacity() const;
 	/**
 	 * @brief Get number of elements in buffer
 	 */
@@ -104,8 +132,8 @@ public:
 	 */
 	bool full() const;
 
-	bool operator==(const CircularBufferBase<T>& other) const;
-	bool operator!=(const CircularBufferBase<T>& other) const;
+	bool operator==(const CircularBuffer<T>& other) const;
+	bool operator!=(const CircularBuffer<T>& other) const;
 
 #ifdef CIRCULAR_BUFFER_ITERATOR
 	CircularBufferIterator<T, false> begin();
@@ -115,47 +143,99 @@ public:
 #endif /* CIRCULAR_BUFFER_ITERATOR */
 
 protected:
-	/**
-	 * @brief Ctor for CircularBufferBase
-	 */
-	CircularBufferBase(size_t capacity);
-
-	CircularBufferBase(const CircularBufferBase<T>& other) = delete;
-	CircularBufferBase<T>& operator=(const CircularBufferBase<T>& other) = delete;
-	CircularBufferBase(CircularBufferBase<T>&& other) = delete;
-	CircularBufferBase<T>& operator=(CircularBufferBase<T>&& other) = delete;
-
 	T* _arr;
 	size_t _num;
 	size_t _frontIdx;
 	size_t _backIdx;
 	size_t _capacity;
 
-	inline size_t incrementIdx(size_t idx);
-	inline size_t decrementIdx(size_t idx);
+	inline size_t incrementIdx(size_t idx) const;
+	inline size_t decrementIdx(size_t idx) const;
 };
 
 template <class T>
-void CircularBufferBase<T>::copy(const CircularBufferBase<T>& other) {
+CircularBuffer<T>::CircularBuffer(size_t capacity) :
+	_arr(nullptr),
+	_num(0),
+	_frontIdx(0),
+	_backIdx(0),
+	_capacity(capacity) {
+	
+	_arr = new T[_capacity];		
+}
+
+template <class T>
+CircularBuffer<T>::CircularBuffer(const CircularBuffer<T>& other) :
+	_capacity(other._capacity){
+	_arr = new T[_capacity];
+	copy(other);
+}
+
+template <class T>
+CircularBuffer<T>::CircularBuffer(CircularBuffer<T>&& other) :
+	_arr(other._arr),
+	_num(other._num),
+	_frontIdx(other._frontIdx),
+	_backIdx(other._backIdx),
+	_capacity(other._capacity) {
+
+	other._arr = nullptr;
+}
+
+template <class T>
+CircularBuffer<T>& CircularBuffer<T>::operator=(const CircularBuffer<T>& other) {
+	if (_capacity != other._capacity) {
+		_capacity = other._capacity;
+		delete[] _arr;
+		_arr = new T[_capacity];
+	}
+	copy(other);
+	return *this;
+}
+
+template <class T>
+CircularBuffer<T>& CircularBuffer<T>::operator=(CircularBuffer<T>&& other) {
+	_num = other._num;
+	_frontIdx = other._frontIdx;
+	_backIdx = other._backIdx;
+	_capacity = other._capacity;
+
+	T* tempPtr = _arr;
+	_arr = other._arr;
+	other._arr = tempPtr;
+	return *this;
+}
+
+template <class T>
+CircularBuffer<T>::~CircularBuffer() {
+	if (_arr != nullptr) {
+		delete[] _arr;
+	}
+}
+
+template <class T>
+void CircularBuffer<T>::copy(const CircularBuffer<T>& other) {
 	_num = other._num;
 	if (_num > _capacity) {
 		_num = _capacity;
 	}
-
-	size_t idx;
-	for (idx = 0; idx < _num; idx++) {
-		_arr[idx] = other._arr[idx];
-	}
 	_backIdx = 0;
-	_frontIdx = idx;
-	// take care of boundary case that _num == _capacity
+
+	size_t thisIdx = _backIdx;
+	size_t otherIdx = other._backIdx;
+	for (size_t i = 0; i < _num; i++) {
+		_arr[thisIdx] = other._arr[otherIdx];
+		thisIdx = this->incrementIdx(thisIdx);
+		otherIdx = other.incrementIdx(otherIdx);
+	}
+	_frontIdx = thisIdx;
 	if (_frontIdx >= _capacity) {
 		_frontIdx = 0;
 	}
 }
 
 template <class T>
-bool CircularBufferBase<T>::pushBack(const T& val) {
+bool CircularBuffer<T>::pushBack(const T& val) {
 	if (_num >= _capacity) {
 		return false;
 	}
@@ -167,7 +247,7 @@ bool CircularBufferBase<T>::pushBack(const T& val) {
 }
 
 template <class T>
-bool CircularBufferBase<T>::pushFront(const T& val) {
+bool CircularBuffer<T>::pushFront(const T& val) {
 	if (_num >= _capacity) {
 		return false;
 	}
@@ -179,7 +259,7 @@ bool CircularBufferBase<T>::pushFront(const T& val) {
 }
 
 template <class T>
-bool CircularBufferBase<T>::popBack() {
+bool CircularBuffer<T>::popBack() {
 	if (_num == 0) {
 		return false;
 	}
@@ -190,7 +270,7 @@ bool CircularBufferBase<T>::popBack() {
 }
 
 template <class T>
-bool CircularBufferBase<T>::popFront() {
+bool CircularBuffer<T>::popFront() {
 	if (_num == 0) {
 		return false;
 	}
@@ -201,18 +281,18 @@ bool CircularBufferBase<T>::popFront() {
 }
 
 template <class T>
-T& CircularBufferBase<T>::readBack() {
+T& CircularBuffer<T>::readBack() {
 	return _arr[_backIdx];
 }
 
 template <class T>
-T& CircularBufferBase<T>::readFront() {
+T& CircularBuffer<T>::readFront() {
 	size_t idx = decrementIdx(_frontIdx);
 	return _arr[idx];
 }
 
 template <class T>
-T& CircularBufferBase<T>::readBack(size_t idx) {
+T& CircularBuffer<T>::readBack(size_t idx) {
 	if (idx >= _capacity) {
 		idx = _capacity - 1;
 	}
@@ -224,7 +304,7 @@ T& CircularBufferBase<T>::readBack(size_t idx) {
 }
 
 template <class T>
-T& CircularBufferBase<T>::readFront(size_t idx) {
+T& CircularBuffer<T>::readFront(size_t idx) {
 	if (idx >= _capacity) {
 		idx = _capacity - 1;
 	}
@@ -240,67 +320,78 @@ T& CircularBufferBase<T>::readFront(size_t idx) {
 }
 
 template <class T>
-const T& CircularBufferBase<T>::readBack() const {
+const T& CircularBuffer<T>::readBack() const {
 	return readBack();
 }
 
 template <class T>
-const T& CircularBufferBase<T>::readFront() const {
+const T& CircularBuffer<T>::readFront() const {
 	return readFront();
 }
 
 template <class T>
-const T& CircularBufferBase<T>::readBack(size_t idx) const {
+const T& CircularBuffer<T>::readBack(size_t idx) const {
 	return readBack(idx);
 }
 
 template <class T>
-const T& CircularBufferBase<T>::readFront(size_t idx) const {
+const T& CircularBuffer<T>::readFront(size_t idx) const {
 	return readFront(idx);
 }
 
 template <class T>
-T CircularBufferBase<T>::readBackCopy() const {
+T CircularBuffer<T>::readBackCopy() const {
 	return readBack();
 }
 
 template <class T>
-T CircularBufferBase<T>::readFrontCopy() const {
+T CircularBuffer<T>::readFrontCopy() const {
 	return readFront();
 }
 
 template <class T>
-T CircularBufferBase<T>::readBackCopy(size_t idx) const {
+T CircularBuffer<T>::readBackCopy(size_t idx) const {
 	return readBack(idx);
 }
 
 template <class T>
-T CircularBufferBase<T>::readFrontCopy(size_t idx) const {
+T CircularBuffer<T>::readFrontCopy(size_t idx) const {
 	return readFront(idx);
 }
 
 template <class T>
-size_t CircularBufferBase<T>::num() const {
+void CircularBuffer<T>::clear() {
+	_num = 0;
+	_frontIdx = _backIdx = 0;
+}
+
+template <class T>
+size_t CircularBuffer<T>::capacity() const {
+	return _capacity;
+}
+
+template <class T>
+size_t CircularBuffer<T>::num() const {
 	return _num;
 }
 
 template <class T>
-bool CircularBufferBase<T>::empty() const {
+bool CircularBuffer<T>::empty() const {
 	return _num == 0;
 }
 
 template <class T>
-bool CircularBufferBase<T>::full() const {
+bool CircularBuffer<T>::full() const {
 	return _num == _capacity;
 }
 
 template <class T>
-bool CircularBufferBase<T>::operator==(const CircularBufferBase<T>& other) const {
+bool CircularBuffer<T>::operator==(const CircularBuffer<T>& other) const {
 	if (_num != other._num) return false;
 
 	size_t idx1 = _backIdx;
 	size_t idx2 = other._backIdx;
-	for (int i = 0; i < _num; i++) {
+	for (size_t i = 0; i < _num; i++) {
 		if (_arr[idx1] != other._arr[idx2]) {
 			return false;
 		}
@@ -313,42 +404,34 @@ bool CircularBufferBase<T>::operator==(const CircularBufferBase<T>& other) const
 }
 
 template <class T>
-bool CircularBufferBase<T>::operator!=(const CircularBufferBase<T>& other) const {
+bool CircularBuffer<T>::operator!=(const CircularBuffer<T>& other) const {
 	return !(*this == other);
 }
 
 #ifdef CIRCULAR_BUFFER_ITERATOR
 template <class T>
-CircularBufferIterator<T, false> CircularBufferBase<T>::begin() {
+CircularBufferIterator<T, false> CircularBuffer<T>::begin() {
 	return CircularBufferIterator<T, false>(this, _backIdx, CircularBufferIterator<T, false>::BACK);
 }
 
 template <class T>
-CircularBufferIterator<T, false> CircularBufferBase<T>::end() {
+CircularBufferIterator<T, false> CircularBuffer<T>::end() {
 	return CircularBufferIterator<T, false>(this, _frontIdx, CircularBufferIterator<T, false>::FRONT);
 }
 
 template <class T>
-CircularBufferIterator<T, true> CircularBufferBase<T>::cbegin() {
+CircularBufferIterator<T, true> CircularBuffer<T>::cbegin() {
 	return CircularBufferIterator<T, true>(this, _backIdx, CircularBufferIterator<T, true>::BACK);
 }
 
 template <class T>
-CircularBufferIterator<T, true> CircularBufferBase<T>::cend() {
+CircularBufferIterator<T, true> CircularBuffer<T>::cend() {
 	return CircularBufferIterator<T, true>(this, _frontIdx, CircularBufferIterator<T, true>::FRONT);
 }
 #endif /* CIRCULAR_BUFFER_ITERATOR */
 
 template <class T>
-CircularBufferBase<T>::CircularBufferBase(size_t capacity) :
-	_arr(nullptr),
-	_num(0),
-	_frontIdx(0),
-	_backIdx(0),
-	_capacity(capacity) { }
-
-template <class T>
-inline size_t CircularBufferBase<T>::incrementIdx(size_t idx) {
+inline size_t CircularBuffer<T>::incrementIdx(size_t idx) const {
 	if (idx == _capacity - 1) {
 		return 0;
 	} else {
@@ -357,7 +440,7 @@ inline size_t CircularBufferBase<T>::incrementIdx(size_t idx) {
 }
 
 template <class T>
-inline size_t CircularBufferBase<T>::decrementIdx(size_t idx) {
+inline size_t CircularBuffer<T>::decrementIdx(size_t idx) const {
 	if (idx == 0) {
 		return _capacity - 1;
 	} else {
@@ -374,8 +457,8 @@ private:
 public:
 	enum IteratorState { BACK, FRONT, MIDDLE };
 	CircularBufferIterator();
-	CircularBufferIterator(CircularBufferBase<T>* ptr);
-	CircularBufferIterator(CircularBufferBase<T>* ptr, size_t idx, IteratorState state);
+	CircularBufferIterator(CircularBuffer<T>* ptr);
+	CircularBufferIterator(CircularBuffer<T>* ptr, size_t idx, IteratorState state);
 	CircularBufferIterator(const CircularBufferIterator<T, C>& other);
 
 	bool valid() const;
@@ -398,7 +481,7 @@ public:
 	int operator-(const CircularBufferIterator<T, C>& other) const;
 
 protected:
-	CircularBufferBase<T>* _ptr;
+	CircularBuffer<T>* _ptr;
 	size_t _idx;
 	IteratorState _state;
 };
@@ -410,13 +493,13 @@ CircularBufferIterator<T, C>::CircularBufferIterator() :
 	_state(BACK) { }
 
 template <class T, bool C>
-CircularBufferIterator<T, C>::CircularBufferIterator(CircularBufferBase<T>* ptr) :
+CircularBufferIterator<T, C>::CircularBufferIterator(CircularBuffer<T>* ptr) :
 	_ptr(ptr),
 	_idx(0),
 	_state(BACK) { }
 
 template <class T, bool C>
-CircularBufferIterator<T, C>::CircularBufferIterator(CircularBufferBase<T>* ptr, size_t idx, IteratorState state) :
+CircularBufferIterator<T, C>::CircularBufferIterator(CircularBuffer<T>* ptr, size_t idx, IteratorState state) :
 	_ptr(ptr),
 	_idx(idx),
 	_state(state) { }
@@ -449,7 +532,7 @@ CircularBufferIterator<T, C> CircularBufferIterator<T, C>::operator++(int) {
 	CircularBufferIterator<T, C> tmp = *this;
 
 	if (_idx != _ptr->_frontIdx || _state == BACK) {
-		if (_idx == _capacity - 1) {
+		if (_idx == _ptr->_capacity - 1) {
 			_idx = 0;
 		} else {
 			_idx++;
@@ -477,7 +560,7 @@ CircularBufferIterator<T, C> CircularBufferIterator<T, C>::operator--(int) {
 
 	if (_idx != _ptr->_backIdx || _state == FRONT) {
 		if (_idx == 0) {
-			_idx = _capacity - 1;
+			_idx = _ptr->_capacity - 1;
 		} else {
 			_idx--;
 		}
@@ -545,8 +628,8 @@ CircularBufferIterator<T, C> CircularBufferIterator<T, C>::operator+(int n) {
 
 	CircularBufferIterator<T, C> ret(*this);
 	ret._idx += n;
-	if (ret._idx >= _capacity) {
-		ret._idx -= _capacity;
+	if (ret._idx >= _ptr->_capacity) {
+		ret._idx -= _ptr->_capacity;
 	}
 	return ret;
 }
@@ -563,7 +646,7 @@ CircularBufferIterator<T, C> CircularBufferIterator<T, C>::operator-(int n) {
 	CircularBufferIterator<T, C> ret(*this);
 	if (ret._idx < n) {
 		// since we are using unsigned, don't subtract or it will underflow
-		ret._idx += _capacity;
+		ret._idx += _ptr->_capacity;
 	}
 	ret._idx -= n;
 	return ret;
@@ -576,10 +659,10 @@ int CircularBufferIterator<T, C>::operator-(const CircularBufferIterator<T, C>& 
 	int diff1;
 	size_t backIdx = _ptr->_backIdx;
 	if (_state == FRONT) {
-		diff1 = _capacity;
+		diff1 = _ptr->_capacity;
 	} else {
 		if (_idx < backIdx) {
-			diff1 = _idx + (_capacity - backIdx);
+			diff1 = _idx + (_ptr->_capacity - backIdx);
 		} else {
 			diff1 = _idx - backIdx;
 		}
@@ -587,10 +670,10 @@ int CircularBufferIterator<T, C>::operator-(const CircularBufferIterator<T, C>& 
 
 	int diff2;
 	if (other._state == FRONT) {
-		diff2 = _capacity;
+		diff2 = _ptr->_capacity;
 	} else {
 		if (other._idx < backIdx) {
-			diff2 = other._idx + (_capacity - backIdx);
+			diff2 = other._idx + (_ptr->_capacity - backIdx);
 		} else {
 			diff2 = other._idx - backIdx;
 		}
@@ -601,4 +684,4 @@ int CircularBufferIterator<T, C>::operator-(const CircularBufferIterator<T, C>& 
 
 #endif /* CIRCULAR_BUFFER_ITERATOR */
 
-#endif /* _CIRCULAR_BUFFER_BASE_HPP */
+#endif /* _CIRCULAR_BUFFER_HPP */

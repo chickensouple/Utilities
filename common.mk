@@ -22,11 +22,9 @@ INCLUDE_COMMON := -I.
 # libraries
 LIBRARY_BOOST_TEST := -lboost_unit_test_framework
 
-OBJECT_PATH := $(subst $(ROOT_DIR), $(ROOT_DIR)/build, $(shell pwd))
+OBJECT_PATH := $(subst $(ROOT_DIR), $(BUILD_DIR), $(shell pwd))
 CXX_OBJECTS := $(addprefix $(OBJECT_PATH)/, $(CXX_SOURCES:.cpp=.cpp.o))
 C_OBJECTS := $(addprefix $(OBJECT_PATH)/, $(C_SOURCES:.c=.c.o))
-
-CXX_TEST_OBJECTS := $(addprefix $(OBJECT_PATH)/, $(TEST_SOURCES:.cpp=.cpp.o))
 
 $(OBJECT_PATH)/%.cpp.o: %.cpp
 # mkdir will recreate the file structure of the original
@@ -34,14 +32,14 @@ $(OBJECT_PATH)/%.cpp.o: %.cpp
 	@$(CXX) -MM $(CXXFLAGS) $(INCLUDES) $< | \
 		perl -pe 's/([a-zA-Z0-9_\/-]*)\.((?!o)[a-zA-Z]*)/$(PERL_CURR_DIR)\/$$1.$$2/g' | \
 		perl -pe 's/([a-zA-Z0-9_\/-]*)\.o/$(subst /,\/,$(dir $@))$$1.cpp.o/g' > $@.d
-	@echo "    [$<]"	
+	@echo "    [$@]"	
 	@$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 $(OBJECT_PATH)/%.c.o: %.c
 # mkdir will recreate the file structure of the original
 	@mkdir -p $(dir $@)
 	@$(CXX) -MM $(CXXFLAGS) $(INCLUDES) $< | sed 's|\([a-zA-Z0-9_-]*\)\.o|$(dir $@)\1.o|' > $@.c.d
-	@echo "    [$<]"
+	@echo "    [$@]"
 	@$(CC) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 

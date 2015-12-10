@@ -111,7 +111,9 @@ public:
 	T readBackCopy(size_t idx) const;
 	T readFrontCopy(size_t idx) const;
 
-
+	/**
+	 * @brief Clears the buffer of all elements
+	 */
 	void clear();
 
 	/**

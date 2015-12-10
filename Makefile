@@ -3,7 +3,7 @@ export MAKEFLAGS=--no-print-directory
 ROOT_DIR := $(shell pwd)
 export ROOT_DIR
 
-PROJECTS := CircularBuffer
+PROJECTS := CircularBuffer Matrix
 
 all: directories
 	@for dir in $(PROJECTS); do \
@@ -19,4 +19,4 @@ directories:
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(OUTPUT_DIR)
 
-.PHONY: all directories
+.PHONY: all clean directories

@@ -74,6 +74,7 @@ protected:
 	bool _escapedState;
 
 	uint16_t _size;
+	uint16_t _frameSize;
 	size_t _idx;
 	uint8_t* _data;
 

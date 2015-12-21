@@ -4,9 +4,9 @@
 using namespace Alectryon;
 
 int main() {
-	uint8_t data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0x7E, 0x7D, 0x20};
-	DataFrameTransmit<false, false> tx(sizeof(data));
-	tx.assemble(data, sizeof(data));
+	uint8_t data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0x7E, 0x7D, 0x20, 2};
+	DataFrameTransmit<false, true> tx(sizeof(data));
+	tx.assemble(data, sizeof(data), 0x42, 0x7E);
 
 	size_t size;
 	const uint8_t* buf = tx.getBuffer(size);
@@ -19,7 +19,7 @@ int main() {
 	printf("\n");
 
 
-	DataFrameRecieve<false, false> rx(sizeof(data));
+	DataFrameRecieve<false, true> rx(sizeof(data));
 	for (size_t i = 0; i < size; i++) {
 		rx.pushByte(buf[i]);
 	}
@@ -27,6 +27,8 @@ int main() {
 	const uint8_t* buf2 = rx.getData();
 	uint16_t rxSize = rx.getDataSize();
 	printf("rx size: %d\n", rxSize);
+	printf("src addr: 0x%02x\n", rx.getSrcAddr());
+	printf("dst addr: 0x%02x\n", rx.getDstAddr());
 	for (uint16_t i = 0; i < rxSize; i++) {
 		printf("0x%02x\t", buf2[i]);
 	}

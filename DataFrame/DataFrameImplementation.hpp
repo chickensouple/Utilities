@@ -1,3 +1,5 @@
+#include <cstdio>
+
 namespace Alectryon {
 
 template <bool Checksum, bool Address>
@@ -87,14 +89,14 @@ void DataFrameTransmit<Checksum, true>::assemble(const uint8_t* packet, uint16_t
 
 	this->_buffer[this->_idx++] = DataFrameStartDelimiter;
 
+	this->assembleByte(size >> 8);
+	this->assembleByte(size & 0xFF);
+
 	this->assembleByte(srcAddr >> 8);
 	this->assembleByte(srcAddr & 0xFF);
 
 	this->assembleByte(dstAddr >> 8);
 	this->assembleByte(dstAddr & 0xFF);
-
-	this->assembleByte(size >> 8);
-	this->assembleByte(size & 0xFF);
 
 	for (int i = 0; i < size; i++) {
 		this->assembleByte(packet[i]);
@@ -121,6 +123,7 @@ DataFrameRecieve<Checksum, Address>::DataFrameRecieve(uint16_t size) :
 	_state(READY),
 	_escapedState(false),
 	_size(size),
+	_frameSize(0),
 	_idx(0),
 	_srcAddr(0),
 	_dstAddr(0),
@@ -135,8 +138,13 @@ DataFrameRecieve<Checksum, Address>::~DataFrameRecieve() {
 	free(_data);
 }
 
+// TODO:
+// check for framSize error (too big, etc.)
+// check for special character error
+// check for checksum error
 template <bool Checksum, bool Address>
 void DataFrameRecieve<Checksum, Address>::pushByte(uint8_t byte) {
+	// printf("byte: 0x%02x\tstate: %d\n", byte, _state);
 	switch (_state) {
 		case READY:
 			if (byte == DataFrameStartDelimiter) {
@@ -144,29 +152,28 @@ void DataFrameRecieve<Checksum, Address>::pushByte(uint8_t byte) {
 			}
 			break;
 		case SIZE_HIGH:
-			pushByteHelper(byte, _size, SIZE_LOW, false);
+			pushByteHelper(byte, _frameSize, SIZE_LOW, true);
 			break;
 		case SIZE_LOW: {
 			State nextState = Address ? SRC_ADDR_HIGH : DATA;
-			pushByteHelper(byte, _size, nextState, true);
+			pushByteHelper(byte, _frameSize, nextState, false);
 			break;
 		}
 		case SRC_ADDR_HIGH:
-			pushByteHelper(byte, _srcAddr, SRC_ADDR_LOW, false);
+			pushByteHelper(byte, _srcAddr, SRC_ADDR_LOW, true);
 			break;
 		case SRC_ADDR_LOW:
-			pushByteHelper(byte, _srcAddr, DST_ADDR_HIGH, true);
+			pushByteHelper(byte, _srcAddr, DST_ADDR_HIGH, false);
 			break;
 		case DST_ADDR_HIGH:
-			pushByteHelper(byte, _srcAddr, DST_ADDR_LOW, false);
+			pushByteHelper(byte, _dstAddr, DST_ADDR_LOW, true);
 			break;
 		case DST_ADDR_LOW:
-			pushByteHelper(byte, _srcAddr, DATA, true);
+			pushByteHelper(byte, _dstAddr, DATA, false);
 			break;
 		case DATA: {
 			State nextState = (_idx < _size - 1) ? DATA : 
 				(Checksum ? CHECKSUM : DONE);
-
 			if (_escapedState) {
 				_data[_idx++] = byte ^ DataFrameXorVal;
 				_escapedState = false;
@@ -195,11 +202,12 @@ void DataFrameRecieve<Checksum, Address>::pushByteHelper(uint8_t byte, uint16_t&
 		}
 		var += tempVal;
 		_state = nextState;
+		_escapedState = false;
 	} else {
 		if (byte == DataFrameEscapeChar) {
 			_escapedState = true;
 		} else {
-			uint16_t tempVal = byte ^ DataFrameXorVal;
+			uint16_t tempVal = byte;
 			if (shift) {
 				tempVal = tempVal << 8;
 			}
@@ -211,6 +219,7 @@ void DataFrameRecieve<Checksum, Address>::pushByteHelper(uint8_t byte, uint16_t&
 
 template <bool Checksum, bool Address>
 void DataFrameRecieve<Checksum, Address>::clear() {
+	_frameSize = 0;
 	_state = READY;
 	_escapedState = false;
 	_idx = 0;
@@ -226,17 +235,17 @@ const uint8_t* DataFrameRecieve<Checksum, Address>::getData() const {
 
 template <bool Checksum, bool Address>
 uint16_t DataFrameRecieve<Checksum, Address>::getDataSize() const {
-	return _idx;
+	return _frameSize;
 }
 
 template <bool Checksum, bool Address>
 uint16_t DataFrameRecieve<Checksum, Address>::getSrcAddr() const {
-
+	return _srcAddr;
 }
 
 template <bool Checksum, bool Address>
 uint16_t DataFrameRecieve<Checksum, Address>::getDstAddr() const {
-
+	return _dstAddr;
 }
 
 

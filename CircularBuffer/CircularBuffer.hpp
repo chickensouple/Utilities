@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <cstring>
 
+namespace Alectryon {
+
 // define CIRCULAR_BUFFER_ITERATOR if iterators are being used
 // #define CIRCULAR_BUFFER_ITERATOR
 
@@ -685,5 +687,7 @@ int CircularBufferIterator<T, C>::operator-(const CircularBufferIterator<T, C>& 
 }
 
 #endif /* CIRCULAR_BUFFER_ITERATOR */
+
+}
 
 #endif /* _CIRCULAR_BUFFER_HPP */

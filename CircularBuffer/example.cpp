@@ -2,6 +2,8 @@
 #include <cstdio>
 #include "CircularBuffer.hpp"
 
+using namespace Alectryon;
+
 int main() {
 	CircularBuffer<int> buff(8);
 	for (int i = 0; i < 10; i++) {

@@ -3,7 +3,7 @@ export MAKEFLAGS=--no-print-directory
 ROOT_DIR := $(shell pwd)
 export ROOT_DIR
 
-PROJECTS := CircularBuffer Matrix
+PROJECTS := CircularBuffer Matrix DataFrame
 
 all: directories
 	@for dir in $(PROJECTS); do \

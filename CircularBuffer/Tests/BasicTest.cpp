@@ -4,6 +4,8 @@
 #define CIRCULAR_BUFFER_ITERATOR
 #include "CircularBuffer.hpp"
 
+using namespace Alectryon;
+
 BOOST_AUTO_TEST_CASE(push_pop_read) {
 	const int buffSize = 10;
 	CircularBuffer<int> buff(buffSize);

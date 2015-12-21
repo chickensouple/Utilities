@@ -13,6 +13,8 @@
 #include <cstdint>
 #include <cmath>
 
+namespace Alectryon {
+
 template <class T>
 class Matrix {
 private:
@@ -986,6 +988,8 @@ void Matrix<T>::rowReduceHigher(Matrix<T>* other) {
 			}
 		}
 	}
+}
+
 }
 
 #endif /* _MATRIX_HPP */

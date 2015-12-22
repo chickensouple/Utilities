@@ -165,13 +165,13 @@ CircularBuffer<T>::CircularBuffer(size_t capacity) :
 	_backIdx(0),
 	_capacity(capacity) {
 	
-	_arr = new T[_capacity];		
+	_arr = (T*) malloc(_capacity * sizeof(T));
 }
 
 template <class T>
 CircularBuffer<T>::CircularBuffer(const CircularBuffer<T>& other) :
 	_capacity(other._capacity){
-	_arr = new T[_capacity];
+	_arr = (T*) malloc(_capacity * sizeof(T));
 	copy(other);
 }
 
@@ -191,7 +191,7 @@ CircularBuffer<T>& CircularBuffer<T>::operator=(const CircularBuffer<T>& other) 
 	if (_capacity != other._capacity) {
 		_capacity = other._capacity;
 		delete[] _arr;
-		_arr = new T[_capacity];
+		_arr = (T*) malloc(_capacity * sizeof(T));
 	}
 	copy(other);
 	return *this;

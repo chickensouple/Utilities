@@ -1,7 +1,7 @@
 #include "DataFrame.hpp"
 #include <cstdio>
 
-using namespace Alectryon;
+using namespace Alectryon::DataFrame;
 
 int main() {
 	uint8_t data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0x7E, 0x7D, 0x20, 2};
@@ -29,6 +29,7 @@ int main() {
 	printf("rx size: %d\n", rxSize);
 	printf("src addr: 0x%02x\n", rx.getSrcAddr());
 	printf("dst addr: 0x%02x\n", rx.getDstAddr());
+	printf("frame state: %d\n", rx.getFrameState());
 	for (uint16_t i = 0; i < rxSize; i++) {
 		printf("0x%02x\t", buf2[i]);
 	}
